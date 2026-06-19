@@ -27,22 +27,41 @@ When you uninstall large frameworks like `django`, running `pip uninstall` only 
 
 ## 🚀 Installation & Usage
 
-To clean packages in a virtual or global environment, you must install `pip-sweep` directly into that target environment:
+To clean packages, you must run `pip-sweep` inside the target Python environment.
 
-### 1. Install into target environment
+### 1. Activate your target virtual environment (if using one)
+
+Choose the command corresponding to your operating system and shell:
+
+* **macOS / Linux (bash/zsh)**:
+  ```bash
+  source .venv/bin/activate
+  ```
+* **Windows (PowerShell)**:
+  ```powershell
+  .venv\Scripts\Activate.ps1
+  ```
+* **Windows (cmd.exe)**:
+  ```cmd
+  .venv\Scripts\activate.bat
+  ```
+* **Conda Environment**:
+  ```bash
+  conda activate myenv
+  ```
+
+*(Note: If you want to clean system-wide global packages, skip this activation step).*
+
+### 2. Install into the active environment
 ```bash
 pip install pip-sweep
 # Or using uv
 uv pip install pip-sweep
 ```
 
-### 2. Run the cleaner
+### 3. Run the cleaner
 ```bash
-# Run via CLI alias
-pip-sweep headroom-ai
-
-# Or run via Python module entrance
-python -m pip_sweep.cli headroom-ai
+pip-sweep <package-name>
 ```
 
 ## 📖 Command-line Usage

@@ -27,22 +27,41 @@
 
 ## 🚀 安装与使用
 
-要清理虚拟环境或全局环境中的依赖包，您必须将 `pip-sweep` 直接安装到目标环境中：
+要清理依赖包，您必须在目标 Python 环境内运行 `pip-sweep`。
 
-### 1. 安装到目标环境中
+### 1. 激活您的目标虚拟环境（若有）
+
+根据您的操作系统与终端 Shell，选择相应的激活命令：
+
+* **macOS / Linux (bash/zsh)**:
+  ```bash
+  source .venv/bin/activate
+  ```
+* **Windows (PowerShell)**:
+  ```powershell
+  .venv\Scripts\Activate.ps1
+  ```
+* **Windows (cmd.exe)**:
+  ```cmd
+  .venv\Scripts\activate.bat
+  ```
+* **Conda 虚拟环境**:
+  ```bash
+  conda activate myenv
+  ```
+
+*(注：如果您想清理系统全局环境的包，请跳过此激活步骤)。*
+
+### 2. 安装到已激活的环境中
 ```bash
 pip install pip-sweep
 # 或者使用 uv
 uv pip install pip-sweep
 ```
 
-### 2. 执行清理
+### 3. 执行清理
 ```bash
-# 正常 CLI 别名运行
-pip-sweep headroom-ai
-
-# 或者使用 Python 模块入口运行
-python -m pip_sweep.cli headroom-ai
+pip-sweep <package-name>
 ```
 
 ## 📖 命令行参数及用法
