@@ -8,13 +8,13 @@ When you uninstall large frameworks like `django`, running `pip uninstall` only 
 
 `pip-sweep` intelligently analyzes the dependency graph of the current environment to safely identify and completely uninstall those orphaned packages that are **only required by the target package and not used by any other surviving packages**.
 
-## ⚠️ Important: Environment & Isolation Limits
+## ⚠️ Critical: Execution Environment & pipx/uvx Incompatibility
 
-`pip-sweep` operates on the **Python environment in which it is running**. 
+`pip-sweep` operates strictly on the **active Python environment in which it is running**. 
 
-- **Virtual Environments (venv/conda)**: To clean packages inside a virtual environment, you must activate the environment first, install `pip-sweep` inside it, and then run it.
-- **Global Environment**: To clean globally installed packages, `pip-sweep` must be run by the global Python interpreter (e.g., global `pip-sweep` command or `python -m pip_sweep.cli`).
-- **`pipx` and `uvx` Warning**: Since `pipx run` and `uvx` execute tools within their own **isolated private virtual environments**, running `pip-sweep` via them will **only see and clean their private environment**, and **CANNOT** detect or clean your global or active virtual environment packages.
+- **Virtual Environments (venv/conda)**: To clean packages inside a virtual environment, you must activate the environment, install `pip-sweep` inside it, and run it.
+- **Global Environment**: To clean globally installed packages, `pip-sweep` must be run by the global Python interpreter.
+- **`pipx run` / `uvx` Incompatibility**: Using `pipx run pip-sweep` or `uvx pip-sweep` **WILL NOT WORK**. These tools run the cleaner inside an **isolated, empty, temporary virtual environment** containing only `pip-sweep` itself. Consequently, they cannot see or clean your active virtual environment or global packages. **Do not use `pipx run` or `uvx` to execute this tool.**
 
 ---
 
@@ -25,19 +25,20 @@ When you uninstall large frameworks like `django`, running `pip uninstall` only 
 - 🔍 **Dry-Run Mode**: Supports `-d` / `--dry-run` to preview the uninstallation plan safely.
 - 💎 **Multi-package Support**: Clean multiple target packages at once.
 
-## 🚀 Quick Start & Installation
+## 🚀 Installation & Usage
 
-### For Active Virtual Environment or Global Environment
-Install `pip-sweep` into the target environment first:
+To clean packages in a virtual or global environment, you must install `pip-sweep` directly into that target environment:
+
+### 1. Install into target environment
 ```bash
 pip install pip-sweep
 # Or using uv
 uv pip install pip-sweep
 ```
 
-Run the cleaner:
+### 2. Run the cleaner
 ```bash
-# General CLI usage
+# Run via CLI alias
 pip-sweep headroom-ai
 
 # Or run via Python module entrance
@@ -64,7 +65,7 @@ options:
 
 ## 🔧 Local Development
 
-To debug or contribute to the project locally:
+To debug or contribute locally:
 
 ```bash
 # Clone the repository
