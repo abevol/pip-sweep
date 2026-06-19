@@ -74,7 +74,7 @@ class TestDependencySweeper(unittest.TestCase):
         to_uninstall, kept = sweeper.find_garbage(['a'])
         self.assertEqual(set(to_uninstall), {'a'})
         # pip 应该被保留
-        kept_names = [pkg for pkg, _ in kept]
+        kept_names = [pkg for pkg, _, _ in kept]
         self.assertIn('pip', kept_names)
 
 if __name__ == '__main__':

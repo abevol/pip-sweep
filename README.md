@@ -1,70 +1,72 @@
+[English] | [中文](README_ZH.md)
+
 # pip-sweep
 
-`pip-sweep` 是一个基于 **Mark-Sweep（标记-清除）算法** 的 Python 依赖包清理工具。
+`pip-sweep` is a command-line tool to clean Python package dependencies using the **Mark-Sweep garbage collection algorithm**.
 
-当您卸载 `django` 或其他大型框架时，仅仅执行 `pip uninstall` 只会删除主包本身，而它们引入的大量下游依赖包则会残留在环境中，形成“依赖垃圾”。
+When you uninstall large frameworks like `django`, running `pip uninstall` only removes the main package itself, leaving a large number of downstream dependencies installed in your environment, creating "dependency garbage".
 
-`pip-sweep` 能智能地分析当前环境的依赖关系图，安全地找出那些**仅被目标包依赖，且没有被其他任何存活包依赖**的孤立包，并进行一键彻底清理。
+`pip-sweep` intelligently analyzes the dependency graph of the current environment to safely identify and completely uninstall those orphaned packages that are **only required by the target package and not used by any other surviving packages**.
 
-## ✨ 特性
+## ✨ Features
 
-- 🧩 **Mark-Sweep 垃圾回收**：精准化的依赖传播算法，规避误卸载。
-- 🛡️ **系统保护**：默认保护 `pip`、`setuptools`、`wheel` 等核心工具包。
-- 🔍 **模拟预览 (Dry-Run)**：支持 `-d` / `--dry-run` 预览清单，安全无忧。
-- 💎 **多包清理**：支持一次性指定多个目标包进行清理。
-- 🚀 **现代工具链友好**：完整支持 `uv` 和 `pipx` 的 `uvx` 及 `pipx run` 即时执行。
+- 🧩 **Mark-Sweep Garbage Collection**: Accurate dependency propagation algorithm to prevent accidental uninstallation.
+- 🛡️ **System Protection**: Protects `pip`, `setuptools`, `wheel`, and other baseline infrastructure packages by default.
+- 🔍 **Dry-Run Mode**: Supports `-d` / `--dry-run` to preview the uninstallation plan safely.
+- 💎 **Multi-package Support**: Clean multiple target packages at once.
+- 🚀 **Modern Toolchain Friendly**: Full support for `uv` and `pipx` instant execution via `uvx` and `pipx run`.
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-您无需在全局手动安装，直接使用现代工具即可一键运行：
-
-```bash
-# 使用 uvx （推荐）
-uvx pip-sweep headroom-ai
-
-# 使用 pipx
-pipx run pip-sweep headroom-ai
-```
-
-## 💻 安装使用
-
-如果您希望将 `pip-sweep` 安装到全局命令行：
+No need to install globally, you can run it directly using modern package managers:
 
 ```bash
-pipx install pip-sweep
+# Using uvx (Recommended)
+uvx --from . pip-sweep headroom-ai
+
+# Using pipx
+pipx run --spec . pip-sweep headroom-ai
 ```
 
-## 📖 命令行参数及用法
+## 💻 Installation
+
+To install `pip-sweep` globally:
+
+```bash
+pipx install .
+```
+
+## 📖 Command-line Usage
 
 ```text
 usage: pip-sweep [-h] [-d] [-y] [-v] packages [packages ...]
 
-pip-sweep: 采用 Mark-Sweep 垃圾回收算法的 Python 依赖包清理工具。
+pip-sweep: A Python dependency cleaner using Mark-Sweep garbage collection algorithm.
 
 positional arguments:
-  packages              要清理的一个或多个目标 Python 包名称
+  packages              One or more target Python packages to clean
 
 options:
-  -h, --help             显示帮助信息并退出
-  -d, --dry-run          仅分析并打印清理计划，不执行实际卸载
-  -y, --yes              自动确认卸载计划，跳过确认交互提示
-  -v, --verbose          详细输出，显示判定存活的包及具体原因
-  --version              显示当前版本并退出
+  -h, --help            Show this help message and exit
+  -d, --dry-run         Analyze and print the clean plan only, without actual uninstallation
+  -y, --yes             Automatically confirm the uninstallation plan, skipping confirmation prompts
+  -v, --verbose         Verbose output, showing kept packages and their specific reasons
+  --version             Show program's version number and exit
 ```
 
-## 🔧 本地开发
+## 🔧 Local Development
 
-如果您想在本地调试或贡献代码，可以使用 `uv` 创建虚拟环境并以可编辑模式安装：
+To debug or contribute to the project locally:
 
 ```bash
-# 克隆代码库
+# Clone the repository
 git clone https://github.com/yourusername/pip-sweep.git
 cd pip-sweep
 
-# 创建 venv 并安装
+# Create venv and install in editable mode
 uv pip install -e .
 ```
 
-## 📝 开源协议
+## 📝 License
 
 MIT License © 2026 pip-sweep developers

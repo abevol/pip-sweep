@@ -58,10 +58,11 @@ class DependencySweeper:
                     queue.append(dep)
         return closure
 
-    def find_garbage(self, targets: List[str]) -> Tuple[List[str], List[Tuple[str, str]]]:
+    def find_garbage(self, targets: List[str]) -> Tuple[List[str], List[Tuple[str, str, str]]]:
         """
         核心 Mark-Sweep 垃圾回收算法
         返回: (to_uninstall, kept_packages_with_reasons)
+        其中 reasons 结构为: (pkg_name, reason_key, extra_info)
         """
         targets_norm = [normalize(t) for t in targets]
         installed_targets_norm = [t for t in targets_norm if t in self.all_installed]
@@ -103,16 +104,20 @@ class DependencySweeper:
         for pkg in sorted(final_kept):
             if pkg in closure:
                 if pkg in self.CORE_INFRASTRUCTURE:
-                    reason = "核心环境基石"
+                    reason_key = "core_infrastructure"
+                    extra_info = ""
                 elif pkg not in targets_norm and len(self.reverse_graph.get(pkg, set())) == 0:
-                    reason = "独立顶层工具 (入度为0)"
+                    reason_key = "independent_tool"
+                    extra_info = ""
                 else:
                     ext_parents = [p for p in self.reverse_graph.get(pkg, set()) if p not in closure]
                     if ext_parents:
-                        reason = f"被外部依赖: {', '.join(self.original_names.get(p, p) for p in ext_parents)}"
+                        reason_key = "external_dependency"
+                        extra_info = ", ".join(self.original_names.get(p, p) for p in ext_parents)
                     else:
-                        reason = "属于存活子树"
-                kept_packages.append((self.original_names.get(pkg, pkg), reason))
+                        reason_key = "surviving_subtree"
+                        extra_info = ""
+                kept_packages.append((self.original_names.get(pkg, pkg), reason_key, extra_info))
 
         to_uninstall = [self.original_names.get(pkg, pkg) for pkg in to_uninstall_norm]
         return to_uninstall, kept_packages
