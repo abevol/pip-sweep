@@ -8,32 +8,40 @@
 
 `pip-sweep` 能智能地分析当前环境的依赖关系图，安全地找出那些**仅被目标包依赖，且没有被其他任何存活包依赖**的孤立包，并进行一键彻底清理。
 
+## ⚠️ 重要：执行环境与虚拟隔离限制
+
+`pip-sweep` 运行和清理的范围完全依赖于**当前正在运行它的 Python 解释器环境**。
+
+- **虚拟环境 (venv/conda)**：若要清理虚拟环境中的依赖包，您必须先激活该环境，在环境内安装 `pip-sweep`，然后再执行清理。
+- **全局环境**：若要清理系统全局环境的依赖包，必须由全局的 Python 解释器来运行它（直接调用全局 `pip-sweep` 命令，或使用全局 Python 执行 `python -m pip_sweep.cli`）。
+- **`pipx` 和 `uvx` 的限制警告**：由于 `pipx run` 和 `uvx` 默认是在它们自己**独立的私有虚拟环境**中执行工具，因此通过它们直接运行 `pip-sweep` 将**只能检测并清理其私有隔离环境内的包**，**无法**扫描和清理您的全局环境或当前激活的虚拟环境包。
+
+---
+
 ## ✨ 特性
 
 - 🧩 **Mark-Sweep 垃圾回收**：精准化的依赖传播算法，规避误卸载。
 - 🛡️ **系统保护**：默认保护 `pip`、`setuptools`、`wheel` 等核心工具包。
 - 🔍 **模拟预览 (Dry-Run)**：支持 `-d` / `--dry-run` 预览清单，安全无忧。
 - 💎 **多包清理**：支持一次性指定多个目标包进行清理。
-- 🚀 **现代工具链友好**：完整支持 `uv` 和 `pipx` 的 `uvx` 及 `pipx run` 即时执行。
 
-## 🚀 快速开始
+## 🚀 快速开始与安装
 
-您无需在全局手动安装，直接使用现代工具即可一键运行：
-
+### 在激活的虚拟环境或全局环境中
+请先将 `pip-sweep` 安装到目标环境中：
 ```bash
-# 使用 uvx （推荐）
-uvx --from . pip-sweep headroom-ai
-
-# 使用 pipx
-pipx run --spec . pip-sweep headroom-ai
+pip install pip-sweep
+# 或者使用 uv
+uv pip install pip-sweep
 ```
 
-## 💻 安装使用
-
-如果您希望将 `pip-sweep` 安装到全局命令行：
-
+执行清理：
 ```bash
-pipx install .
+# 正常 CLI 别名运行
+pip-sweep headroom-ai
+
+# 或者使用 Python 模块入口运行
+python -m pip_sweep.cli headroom-ai
 ```
 
 ## 📖 命令行参数及用法
@@ -60,7 +68,7 @@ options:
 
 ```bash
 # 克隆代码库
-git clone https://github.com/yourusername/pip-sweep.git
+git clone https://github.com/abevol/pip-sweep.git
 cd pip-sweep
 
 # 创建 venv 并安装
