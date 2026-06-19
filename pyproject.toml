@@ -1,0 +1,29 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pip-sweep"
+dynamic = ["version"]
+description = "A command-line tool to clean Python package dependencies using Mark-Sweep garbage collection algorithm."
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+authors = [
+    {name = "pip-sweep developers"}
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = []
+
+[project.scripts]
+pip-sweep = "pip_sweep.cli:main"
+
+[tool.hatch.version]
+path = "src/pip_sweep/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pip_sweep"]
