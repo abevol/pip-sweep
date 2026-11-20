@@ -24,6 +24,7 @@
 - 🛡️ **系统保护**：默认保护 `pip`、`setuptools`、`wheel` 等核心工具包。
 - 🔍 **模拟预览 (Dry-Run)**：支持 `-d` / `--dry-run` 预览清单，安全无忧。
 - 💎 **多包清理**：支持一次性指定多个目标包进行清理。
+- 📌 **指定需要保留的包**：支持 `-e` / `--exclude` 在卸载时指定需要保留的包（及其自身依赖）。
 
 ## 🚀 安装与使用
 
@@ -64,10 +65,29 @@ uv pip install pip-sweep
 pip-sweep <package-name>
 ```
 
+#### 3.1 卸载时保留指定的包
+
+使用 `-e` / `--exclude` 保留那些本来会随目标一起被卸载的包
+
+```bash
+# 保留 rfc3986 和 requests-toolbelt (以及它们依赖的包)
+pip-sweep twine -e rfc3986 requests-toolbelt
+
+# 等价写法: 重复使用 -e, 或用逗号分隔
+pip-sweep twine -e rfc3986 -e requests-toolbelt
+pip-sweep twine -e rfc3986,requests-toolbelt
+```
+
+被保留的包本身及其依赖子树都会存活，目标自身不允许被排除。
+
+> [!TIP]
+>
+> 由于 `-e` 接受空格分隔的列表，使用空格作为分隔符时，请把它放在目标包之后，否则 argparse 会把后面的包名当作保留列表的一部分。
+
 ## 📖 命令行参数及用法
 
 ```text
-usage: pip-sweep [-h] [-d] [-y] [-v] packages [packages ...]
+usage: pip-sweep [-h] [-d] [-y] [-v] [-e PACKAGE [PACKAGE ...]] packages [packages ...]
 
 pip-sweep: 采用 Mark-Sweep 垃圾回收算法的 Python 依赖包清理工具。
 
@@ -79,6 +99,9 @@ options:
   -d, --dry-run          仅分析并打印清理计划，不执行实际卸载
   -y, --yes              自动确认卸载计划，跳过确认交互提示
   -v, --verbose          详细输出，显示判定存活的包及具体原因
+  -e, --exclude PACKAGE [PACKAGE ...]
+                         要保留的包名列表（可空格分隔多个，也可用 -e 重复指定），
+                         这些包及其依赖不会被卸载
   --version              显示当前版本并退出
 ```
 

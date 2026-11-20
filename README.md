@@ -24,6 +24,7 @@ When you uninstall large frameworks like `django`, running `pip uninstall` only 
 - 🛡️ **System Protection**: Protects `pip`, `setuptools`, `wheel`, and other baseline infrastructure packages by default.
 - 🔍 **Dry-Run Mode**: Supports `-d` / `--dry-run` to preview the uninstallation plan safely.
 - 💎 **Multi-package Support**: Clean multiple target packages at once.
+- 📌 **Specify Packages to Keep**: Use `-e` / `--exclude` to specify packages (and their own dependencies) that should be kept during uninstallation.
 
 ## 🚀 Installation & Usage
 
@@ -64,10 +65,29 @@ uv pip install pip-sweep
 pip-sweep <package-name>
 ```
 
+#### 3.1 Keeping specific packages while uninstalling
+
+Use `-e` / `--exclude` to keep packages that would otherwise be uninstalled together with the target
+
+```bash
+# Keep rfc3986 and requests-toolbelt (and anything they depend on)
+pip-sweep twine -e rfc3986 requests-toolbelt
+
+# Equivalent: repeat the flag, or use commas
+pip-sweep twine -e rfc3986 -e requests-toolbelt
+pip-sweep twine -e rfc3986,requests-toolbelt
+```
+
+The kept packages themselves and their dependency subtree survive; the target package itself cannot be excluded.
+
+> [!TIP]
+>
+> Because `-e` accepts a space-separated list, when using spaces as the separator, put it **after** the target packages, otherwise argparse will treat the following names as part of the keep list.
+
 ## 📖 Command-line Usage
 
 ```text
-usage: pip-sweep [-h] [-d] [-y] [-v] packages [packages ...]
+usage: pip-sweep [-h] [-d] [-y] [-v] [-e PACKAGE [PACKAGE ...]] packages [packages ...]
 
 pip-sweep: A Python dependency cleaner using Mark-Sweep garbage collection algorithm.
 
@@ -79,6 +99,9 @@ options:
   -d, --dry-run         Analyze and print the clean plan only, without actual uninstallation
   -y, --yes             Automatically confirm the uninstallation plan, skipping confirmation prompts
   -v, --verbose         Verbose output, showing kept packages and their specific reasons
+  -e, --exclude PACKAGE [PACKAGE ...]
+                        Package names to keep (space-separated, or repeat -e); these
+                        packages and their dependencies will not be uninstalled
   --version             Show program's version number and exit
 ```
 
