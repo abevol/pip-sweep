@@ -24,10 +24,13 @@ LOCALES = {
         "help_dry_run": "仅分析并打印清理计划，不执行实际卸载",
         "help_yes": "自动确认卸载计划，跳过确认交互提示",
         "help_verbose": "详细输出，显示判定存活的包及具体原因",
+        "help_exclude": "要保留的包名列表 (可空格分隔多个，也可用 -e 重复指定)，这些包及其依赖不会被卸载。注意：请把 -e 放在目标包之后，例如 pip-sweep pkg -e excluded-pkg-a exclude-pkg-b",
         "help_version": "显示当前版本并退出",
         "scanning": "⏳ 正在扫描全局/虚拟环境中的已安装包...",
         "found_packages": "   已发现 {count} 个已安装包",
         "not_found_warning": "⚠️  警告：在当前环境中找不到包：{packages}",
+        "exclude_not_installed_warning": "⚠️ 警告：已忽略未安装的包：{packages}",
+        "exclude_target_ignored": "⚠️ 警告：目标本身不能被排除，已忽略：{packages}",
         "error_no_installed": "❌ 错误：指定的目标包在当前环境中均未安装，无法进行清理。",
         "running_algorithm": "⏳ 正在运行 Mark-Sweep 算法分析依赖图...",
         "to_uninstall_title": "🗑️   将被彻底卸载的包 (目标主包及不再被其他包需要的孤立依赖，共 {count} 个):",
@@ -45,7 +48,8 @@ LOCALES = {
         "reason_core_infrastructure": "核心环境基石",
         "reason_independent_tool": "独立顶层工具 (入度为0)",
         "reason_external_dependency": "被外部依赖: {parents}",
-        "reason_surviving_subtree": "属于存活子树"
+        "reason_surviving_subtree": "属于存活子树",
+        "reason_user_excluded": "用户指定保留 (-e/--exclude)",
     },
     "en": {
         "description": "pip-sweep: A Python dependency cleaner using Mark-Sweep garbage collection algorithm.",
@@ -53,10 +57,13 @@ LOCALES = {
         "help_dry_run": "Analyze and print the clean plan only, without actual uninstallation",
         "help_yes": "Automatically confirm the uninstallation plan, skipping confirmation prompts",
         "help_verbose": "Verbose output, showing kept packages and their specific reasons",
+        "help_exclude": "Package names to keep (space-separated, or repeat -e); these packages and their dependencies will not be uninstalled. Note: place -e after the target packages, e.g. pip-sweep pkg -e a b",
         "help_version": "Show program's version number and exit",
         "scanning": "⏳ Scanning installed packages in global/virtual environment...",
         "found_packages": "   Found {count} installed packages",
         "not_found_warning": "⚠️  Warning: Package(s) not found in the current environment: {packages}",
+        "exclude_not_installed_warning": "⚠️  Warning: Package(s) to keep are not installed, ignored: {packages}",
+        "exclude_target_ignored": "⚠️  Warning: Target package(s) cannot be excluded, ignored: {packages}",
         "error_no_installed": "❌ Error: None of the specified target packages are installed in the current environment.",
         "running_algorithm": "⏳ Running Mark-Sweep algorithm to analyze dependency graph...",
         "to_uninstall_title": "🗑️   Packages to be completely uninstalled (targets & orphaned dependencies, {count} in total):",
@@ -74,7 +81,8 @@ LOCALES = {
         "reason_core_infrastructure": "Core environment infrastructure",
         "reason_independent_tool": "Independent top-level tool (in-degree is 0)",
         "reason_external_dependency": "Required by external package(s): {parents}",
-        "reason_surviving_subtree": "Belongs to a surviving subtree"
+        "reason_surviving_subtree": "Belongs to a surviving subtree",
+        "reason_user_excluded": "Kept by user (-e/--exclude)",
     }
 }
 
@@ -106,6 +114,14 @@ def parse_args():
         "-v", "--verbose",
         action="store_true",
         help=get_txt("help_verbose")
+    )
+    parser.add_argument(
+        "-e", "--exclude",
+        nargs="+",
+        action="extend",
+        default=[],
+        metavar="PACKAGE",
+        help=get_txt("help_exclude")
     )
     parser.add_argument(
         "--version",
@@ -141,9 +157,32 @@ def main():
     if not installed_targets:
         print(get_txt("error_no_installed"))
         sys.exit(1)
-        
+
+    # 解析需保留的包：支持空格分隔（-e a b c）、重复 -e、以及逗号分隔（-e a,b）
+    exclude_raw = []
+    for item in (args.exclude or []):
+        exclude_raw.extend(p.strip() for p in item.split(",") if p.strip())
+
+    target_norm = {normalize(t) for t in installed_targets}
+    # 目标包本身不允许被排除，否则语义矛盾
+    conflict = sorted(p for p in exclude_raw if normalize(p) in target_norm)
+    if conflict:
+        print(get_txt("exclude_target_ignored", packages=', '.join(conflict)))
+
+    exclude_missing = sorted(
+        p for p in exclude_raw
+        if normalize(p) not in sweeper.all_installed and normalize(p) not in target_norm
+    )
+    if exclude_missing:
+        print(get_txt("exclude_not_installed_warning", packages=', '.join(exclude_missing)))
+
+    installed_excludes = [
+        p for p in exclude_raw
+        if normalize(p) in sweeper.all_installed and normalize(p) not in target_norm
+    ]
+
     print(get_txt("running_algorithm"))
-    to_uninstall, kept_packages = sweeper.find_garbage(installed_targets)
+    to_uninstall, kept_packages = sweeper.find_garbage(installed_targets, exclude=installed_excludes)
     
     print("-" * 70)
     print(get_txt("to_uninstall_title", count=len(to_uninstall)))

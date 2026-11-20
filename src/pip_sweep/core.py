@@ -3,7 +3,7 @@ import re
 import subprocess
 import sys
 from collections import defaultdict, deque
-from typing import Set, Dict, List, Tuple
+from typing import Set, Dict, List, Tuple, Optional
 
 def normalize(name: str) -> str:
     return re.sub(r'[-_.]+', '-', name).lower()
@@ -58,9 +58,14 @@ class DependencySweeper:
                     queue.append(dep)
         return closure
 
-    def find_garbage(self, targets: List[str]) -> Tuple[List[str], List[Tuple[str, str, str]]]:
+    def find_garbage(self, targets: List[str], exclude: Optional[List[str]] = None) -> Tuple[List[str], List[Tuple[str, str, str]]]:
         """
         核心 Mark-Sweep 垃圾回收算法
+
+        :param targets: 要被清理的目标主包
+        :param exclude: 强制保留的包
+                        即使它们属于待清理的包，也不会被卸载，
+                        同时它们依赖的包也会一并保留
         返回: (to_uninstall, kept_packages_with_reasons)
         其中 reasons 结构为: (pkg_name, reason_key, extra_info)
         """
@@ -69,11 +74,18 @@ class DependencySweeper:
         if not installed_targets_norm:
             return [], []
 
+        # 用户显式要求保留的包
+        excluded = {normalize(e) for e in (exclude or [])}
+        excluded &= self.all_installed
+
         closure = self.get_dependency_closure(installed_targets_norm)
 
         # 阶段 1：Mark
         survivors = set()
         for pkg in self.all_installed:
+            if pkg in excluded:
+                survivors.add(pkg)
+                continue
             if pkg not in closure:
                 survivors.add(pkg)
                 continue
@@ -103,7 +115,10 @@ class DependencySweeper:
         kept_packages = []
         for pkg in sorted(final_kept):
             if pkg in closure:
-                if pkg in self.CORE_INFRASTRUCTURE:
+                if pkg in excluded:
+                    reason_key = "user_excluded"
+                    extra_info = ""
+                elif pkg in self.CORE_INFRASTRUCTURE:
                     reason_key = "core_infrastructure"
                     extra_info = ""
                 elif pkg not in targets_norm and len(self.reverse_graph.get(pkg, set())) == 0:
