@@ -77,5 +77,54 @@ class TestDependencySweeper(unittest.TestCase):
         kept_names = [pkg for pkg, _, _ in kept]
         self.assertIn('pip', kept_names)
 
+    @patch('importlib.metadata.distributions')
+    def test_exclude_keeps_package_and_its_subtree(self, mock_dists):
+        # 拓扑：a -> [b, c], c -> d
+        mock_dists.return_value = [
+            MockDistribution('a', ['b', 'c']),
+            MockDistribution('b', []),
+            MockDistribution('c', ['d']),
+            MockDistribution('d', []),
+        ]
+
+        sweeper = DependencySweeper()
+        sweeper.build_dependency_graph()
+
+        # 保留 c，则 c 及其依赖 d 都应存活
+        to_uninstall, kept = sweeper.find_garbage(['a'], exclude=['c'])
+        self.assertEqual(set(to_uninstall), {'a', 'b'})
+        self.assertNotIn('c', to_uninstall)
+        self.assertNotIn('d', to_uninstall)
+
+        kept_reasons = {pkg.lower(): reason for pkg, reason, _ in kept}
+        self.assertEqual(kept_reasons.get('c'), 'user_excluded')
+
+    @patch('importlib.metadata.distributions')
+    def test_exclude_normalizes_names(self, mock_dists):
+        # 用下划线/大写形式的排除名也应生效
+        mock_dists.return_value = [
+            MockDistribution('a', ['JSONPath_NG']),
+            MockDistribution('jsonpath-ng', []),
+        ]
+
+        sweeper = DependencySweeper()
+        sweeper.build_dependency_graph()
+
+        to_uninstall, _ = sweeper.find_garbage(['a'], exclude=['jsonpath_ng'])
+        self.assertEqual(set(to_uninstall), {'a'})
+
+    @patch('importlib.metadata.distributions')
+    def test_exclude_not_installed_is_ignored(self, mock_dists):
+        mock_dists.return_value = [
+            MockDistribution('a', ['b']),
+            MockDistribution('b', []),
+        ]
+
+        sweeper = DependencySweeper()
+        sweeper.build_dependency_graph()
+
+        to_uninstall, _ = sweeper.find_garbage(['a'], exclude=['ghost'])
+        self.assertEqual(set(to_uninstall), {'a', 'b'})
+
 if __name__ == '__main__':
     unittest.main()
